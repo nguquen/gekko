@@ -291,6 +291,14 @@ config.ircbot = {
   botName: 'gekkobot'
 }
 
+config.slackbot = {
+  enabled: false,
+  emitUpdates: false,
+  muteSoft: true,
+  channel: 'your-channel'
+  token: 'YOUR_SLACK_BOT_TOKEN'
+}
+
 config.telegrambot = {
   enabled: false,
   emitUpdates: false,

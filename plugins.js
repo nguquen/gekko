@@ -53,6 +53,17 @@ var plugins = [
     }]
   },
   {
+    name: 'Slack bot',
+    description: 'Slack module lets you communicate with Gekko on Slack.',
+    slug: 'slackbot',
+    async: false,
+    modes: ['realtime'],
+    dependencies: [{
+      module: '@slack/client',
+      version: '3.10.0'
+    }]
+  },
+  {
     name: 'Telegram bot',
     description: 'Telegram module lets you communicate with Gekko on Telegram.',
     slug: 'telegrambot',
