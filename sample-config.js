@@ -295,7 +295,8 @@ config.slackbot = {
   enabled: false,
   emitUpdates: false,
   muteSoft: true,
-  channel: 'your-channel'
+  channel: 'your-channel',
+  dataDir: 'history',
   token: 'YOUR_SLACK_BOT_TOKEN'
 }
 

@@ -2,8 +2,15 @@ var log = require('../core/log');
 var moment = require('moment');
 var _ = require('lodash');
 var config = require('../core/util').getConfig();
+var dirs = require('../core/util').dirs();
+var sqlite3 = require('sqlite3');
 var slackbot = config.slackbot;
 var utc = moment.utc;
+
+var dbName = 'slackbot.db';
+var dataDir = dirs.gekko + slackbot.dataDir;
+var dbFullPath = [dataDir, dbName].join('/');
+var db = new sqlite3.Database(dbFullPath);
 
 var RtmClient = require('@slack/client').RtmClient;
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
@@ -13,6 +20,8 @@ var placeHolder = '__slack__';
 
 var Actor = function() {
   _.bindAll(this);
+
+  this.upsertTable();
 
   this.advice = 'Dont got one yet :(';
   this.adviceTime = utc();
@@ -37,6 +46,22 @@ var Actor = function() {
   this.bot.on(CLIENT_EVENTS.RTM.AUTHENTICATED, this.authenticated);
   this.bot.on(RTM_EVENTS.MESSAGE, this.verifyQuestion);
   this.bot.start();
+}
+
+Actor.prototype.upsertTable = function() {
+  var createQuery = `
+      CREATE TABLE IF NOT EXISTS
+      messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp STRING UNIQUE
+      );
+    `
+  db.run(createQuery);
+}
+
+Actor.prototype.insertMessage = function(timestamp, callback) {
+  var query = `INSERT INTO messages (timestamp) VALUES (?)`;
+  db.run(query, timestamp, callback);
 }
 
 Actor.prototype.processCandle = function(candle, done) {
@@ -81,7 +106,7 @@ Actor.prototype.authenticated = function(rtmStartData) {
 
 Actor.prototype.verifyQuestion = function(message) {
   if (message.text in this.commands && this.channel === message.channel)
-    this[this.commands[message.text]]();
+    this[this.commands[message.text]](message.ts);
 }
 
 Actor.prototype.newAdvice = function() {
@@ -136,15 +161,23 @@ Actor.prototype.emitPrice = function() {
 };
 
 // sent donation info over to the IRC channel
-Actor.prototype.emitDonation = function() {
+Actor.prototype.emitDonation = function(timestamp) {
+  var _self = this;
+
   var message = 'You want to donate? How nice of you! You can send your coins here:';
   message += '\nBTC:\t1C8vyMaFsD4tdnUKwMiPTt1DocBcPsEiC6';
 
-  this.bot.sendMessage(message, this.channel);
+  _self.insertMessage(timestamp, function(err) {
+    if (err)
+      return;
+
+    _self.bot.sendMessage(message, _self.channel);
+  })
 };
 
-Actor.prototype.emitHelp = function() {
+Actor.prototype.emitHelp = function(timestamp) {
   var _self = this;
+
   var message = _.reduce(
     _self.rawCommands,
     function(message, command) {
@@ -155,10 +188,16 @@ Actor.prototype.emitHelp = function() {
 
   message = message.substr(0, _.size(message) - 1) + '.';
 
-  this.bot.sendMessage(message, this.channel);
+  _self.insertMessage(timestamp, function(err) {
+    if (err)
+      return;
+
+    _self.bot.sendMessage(message, _self.channel);
+  });
 }
 
-Actor.prototype.emitRealAdvice = function() {
+Actor.prototype.emitRealAdvice = function(timestamp) {
+  var _self = this;
   // http://www.examiner.com/article/uncaged-a-look-at-the-top-10-quotes-of-gordon-gekko
   // http://elitedaily.com/money/memorable-gordon-gekko-quotes/
   var realAdvice = [
@@ -171,7 +210,12 @@ Actor.prototype.emitRealAdvice = function() {
     'When I get a hold of the son of a bitch who leaked this, I\'m gonna tear his eyeballs out and I\'m gonna suck his fucking skull.'
   ];
 
-  this.bot.sendMessage(_.first(_.shuffle(realAdvice)), this.channel);
+  _self.insertMessage(timestamp, function(err) {
+    if (err)
+      return;
+
+    _self.bot.sendMessage(_.first(_.shuffle(realAdvice)), _self.channel);
+  });
 }
 
 Actor.prototype.logError = function(message) {
