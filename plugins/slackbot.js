@@ -80,7 +80,7 @@ Actor.prototype.authenticated = function(rtmStartData) {
 }
 
 Actor.prototype.verifyQuestion = function(message) {
-  if (message.text in this.commands)
+  if (message.text in this.commands && this.channel === message.channel)
     this[this.commands[message.text]]();
 }
 
