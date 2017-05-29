@@ -21,11 +21,11 @@ var Actor = function() {
   this.priceTime = utc();
 
   this.commands = {
-    placeHolder + ' advice': 'emitAdvice',
-    placeHolder + ' price': 'emitPrice',
-    placeHolder + ' donate': 'emitDonation',
-    placeHolder + ' real advice': 'emitRealAdvice',
-    placeHolder + ' help': 'emitHelp'
+    [placeHolder + ' advice']: 'emitAdvice',
+    [placeHolder + ' price']: 'emitPrice',
+    [placeHolder + ' donate']: 'emitDonation',
+    [placeHolder + ' real advice']: 'emitRealAdvice',
+    [placeHolder + ' help']: 'emitHelp'
   };
 
   this.rawCommands = _.keys(this.commands);
