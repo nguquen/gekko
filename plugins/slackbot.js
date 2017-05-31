@@ -133,7 +133,11 @@ Actor.prototype.emitAdvice = function() {
     config.watch.asset,
     ' (from ',
       this.adviceTime.fromNow(),
-    ')'
+    ')',
+    ' - ',
+    this.price,
+    ' ',
+    config.watch.currency
   ].join('');
 
   this.bot.sendMessage(message, this.channel);
